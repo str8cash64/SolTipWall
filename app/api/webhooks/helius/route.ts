@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       (evt.accountData ?? []).forEach((a:any)=> a?.account && refs.add(a.account));
       (evt.instructions ?? []).forEach((i:any)=> (i.accounts ?? []).forEach((a:string)=> a && refs.add(a)));
 
-      for (const ref of refs) {
+      for (const ref of Array.from(refs)) {
         const { data: tip } = await sbAdmin
           .from('tips').select('id,status').eq('reference_pubkey', ref).single();
         if (!tip || tip.status !== 'awaiting_payment') continue;

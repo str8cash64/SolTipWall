@@ -1,18 +1,117 @@
 'use client';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { sb } from '@/lib/supabase-browser';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { User, LogOut, Loader2 } from 'lucide-react';
 
 export default function AuthButtons() {
-  async function signInWithX() {
-    await sb().auth.signInWithOAuth({
-      provider: 'twitter',
-      options: { redirectTo: `${location.origin}/auth/callback` }
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userHandle, setUserHandle] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    let mounted = true;
+    sb().auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setUserId(data.user?.id ?? null);
+      setUserHandle(data.user?.user_metadata?.user_name || data.user?.user_metadata?.preferred_username || null);
     });
+    const { data: sub } = sb().auth.onAuthStateChange((_e, sess) => {
+      setUserId(sess?.user?.id ?? null);
+      setUserHandle(sess?.user?.user_metadata?.user_name || sess?.user?.user_metadata?.preferred_username || null);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function signInWithX() {
+    setLoading(true);
+    try {
+      const { error } = await sb().auth.signInWithOAuth({
+        provider: 'twitter',
+        options: { redirectTo: `${location.origin}/auth/callback` }
+      });
+      if (error) {
+        console.error(error);
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
+          description: "There was an error signing you in. Please try again."
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Sign in failed", 
+        description: "There was an error signing you in. Please try again."
+      });
+    }
   }
-  async function signOut() { await sb().auth.signOut(); }
+
+  async function signOut() {
+    try {
+      await sb().auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully."
+      });
+      location.href = '/';
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Sign out failed",
+        description: "There was an error signing you out."
+      });
+    }
+  }
+
+  if (userId) {
+    return (
+      <div className="flex items-center space-x-4">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm">
+            Dashboard
+          </Button>
+        </Link>
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm">
+            <User className="h-4 w-4 mr-2" />
+            {userHandle || 'User'}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={signOut}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex gap-2">
-      <button onClick={signInWithX} className="px-3 py-2 rounded bg-green-600 text-white">Sign in with X</button>
-      <button onClick={signOut} className="px-3 py-2 rounded bg-slate-700 text-white">Sign out</button>
-    </div>
+    <Button 
+      size="sm" 
+      className="font-medium"
+      disabled={loading}
+      onClick={signInWithX}
+    >
+      {loading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Connecting...
+        </>
+      ) : (
+        'Sign in with X'
+      )}
+    </Button>
   );
 }

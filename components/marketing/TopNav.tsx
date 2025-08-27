@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useToast } from '@/components/ui/use-toast'
 import { Zap, Menu, ArrowRight, Loader2 } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { sb } from '@/lib/supabase-browser'
 
 const navLinks = [
   { href: '#creators', label: 'Browse Creators' },
@@ -16,22 +16,42 @@ const navLinks = [
 ]
 
 export function TopNav() {
-  const { isAuthenticated, login, isLoading } = useAuth()
   const { toast } = useToast()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let mounted = true;
+    sb().auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setIsAuthenticated(!!data.user);
+    });
+    const { data: sub } = sb().auth.onAuthStateChange((_e, sess) => {
+      setIsAuthenticated(!!sess?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSignIn = async () => {
+    setIsLoading(true);
     try {
       toast({
         title: "Connecting to X...",
         description: "Redirecting to Twitter for authentication."
       })
-      await login()
-      toast({
-        title: "Welcome to TipWall!",
-        description: "You can now access your creator dashboard."
-      })
+      const { error } = await sb().auth.signInWithOAuth({
+        provider: 'twitter',
+        options: { redirectTo: `${location.origin}/auth/callback` }
+      });
+      if (error) {
+        throw error;
+      }
     } catch (error) {
+      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Sign in failed",

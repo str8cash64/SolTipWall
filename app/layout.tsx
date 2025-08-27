@@ -4,7 +4,7 @@ import './globals.css'
 import { TopNav } from '@/components/marketing'
 import { Footer } from '@/components/footer'
 import { Toaster } from '@/components/ui/toaster'
-import { AuthProvider } from '@/lib/auth-context'
+
 import WalletProviders from '@/components/WalletProviders'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -69,16 +69,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <AuthProvider>
-          <WalletProviders>
-            <div className="relative flex min-h-screen flex-col">
-              <TopNav />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
-          </WalletProviders>
-        </AuthProvider>
+        <WalletProviders>
+          <div className="relative flex min-h-screen flex-col">
+            <TopNav />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <Toaster />
+        </WalletProviders>
       </body>
     </html>
   )
