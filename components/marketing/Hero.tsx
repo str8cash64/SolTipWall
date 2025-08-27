@@ -4,35 +4,52 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { useAuth } from '@/lib/auth-context'
+import { useState, useEffect } from 'react'
+import { sb } from '@/lib/supabase-browser'
 import { ArrowRight, Loader2, MessageCircle, Wallet, Zap, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
 import { calculateFee } from '@/lib/mocks'
 
 export function Hero() {
-  const { isAuthenticated, login, isLoading } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
   const [tipAmount, setTipAmount] = useState(0.05)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    let mounted = true;
+    sb().auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setIsAuthenticated(!!data.user);
+    });
+    const { data: sub } = sb().auth.onAuthStateChange((_e, sess) => {
+      setIsAuthenticated(!!sess?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSignIn = async () => {
     if (isAuthenticated) {
       router.push('/dashboard')
     } else {
+      setIsLoading(true);
       try {
         toast({
           title: "Connecting to X...",
           description: "Redirecting to Twitter for authentication."
         })
-        await login()
-        toast({
-          title: "Welcome to TipWall!",
-          description: "You can now access your creator dashboard."
-        })
-        router.push('/dashboard')
+        const { error } = await sb().auth.signInWithOAuth({
+          provider: 'twitter',
+          options: { redirectTo: `${location.origin}/auth/callback` }
+        });
+        if (error) throw error;
       } catch (error) {
+        setIsLoading(false);
         toast({
           variant: "destructive",
           title: "Sign in failed",
