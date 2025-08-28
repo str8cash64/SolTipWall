@@ -34,7 +34,7 @@ export default function AuthButtons() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const redirectToUrl = `${location.origin}/auth/callback?next=/dashboard`;
+      const redirectToUrl = `https://soltipwall.com/auth/callback?next=/dashboard&t=${Date.now()}`;
       console.log('🔐 Attempting to sign in with X');
       console.log('🔐 Current origin:', location.origin);
       console.log('🔐 Redirect URL:', redirectToUrl);
@@ -44,10 +44,7 @@ export default function AuthButtons() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: { 
-          redirectTo: redirectToUrl,
-          queryParams: {
-            redirect_to: redirectToUrl
-          }
+          redirectTo: redirectToUrl
         }
       });
       if (error) {
