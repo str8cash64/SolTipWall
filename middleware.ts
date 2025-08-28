@@ -3,6 +3,11 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(req: NextRequest) {
+  // Skip middleware for auth callback route to avoid interference
+  if (req.nextUrl.pathname === '/auth/callback') {
+    return NextResponse.next();
+  }
+
   let res = NextResponse.next({
     request: {
       headers: req.headers,
@@ -55,10 +60,7 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // This will refresh session if expired - required for Server Components
-  await supabase.auth.getUser();
-
-  // Only protect dashboard routes
+  // Only refresh session for protected routes
   if (req.nextUrl.pathname.startsWith('/dashboard')) {
     const { data: { user } } = await supabase.auth.getUser();
     

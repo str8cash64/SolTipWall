@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
+  console.log('🔐 Auth callback route called!');
+  console.log('🔐 Request URL:', req.url);
+  
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') || '/dashboard';
 
+  console.log('🔐 Code present:', !!code);
+  console.log('🔐 Next redirect:', next);
+
   if (!code) {
-    console.error('No code provided in callback');
+    console.error('❌ No code provided in callback');
     return NextResponse.redirect(new URL('/?error=no_code', url.origin));
   }
 
