@@ -35,12 +35,17 @@ export default function AuthButtons() {
     try {
       const supabase = createSupabaseBrowserClient()
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('🔐 Redirect URL:', `${window.location.origin}/auth/callback`)
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: { 
           redirectTo: `${window.location.origin}/auth/callback`
         }
       })
+      
+      console.log('🔐 OAuth result:', { data, error })
       
       if (error) {
         console.error('🔐 Auth error:', error)
@@ -48,7 +53,7 @@ export default function AuthButtons() {
         toast({
           variant: "destructive",
           title: "Sign in failed",
-          description: "There was an error signing you in. Please try again."
+          description: `Error: ${error.message}`
         })
       }
     } catch (error) {
@@ -57,7 +62,7 @@ export default function AuthButtons() {
       toast({
         variant: "destructive",
         title: "Sign in failed", 
-        description: "There was an error signing you in. Please try again."
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
       })
     }
   }
