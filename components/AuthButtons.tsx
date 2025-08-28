@@ -36,7 +36,12 @@ export default function AuthButtons() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
-        options: { redirectTo: `${location.origin}/auth/callback?next=/dashboard` }
+        options: { 
+          redirectTo: `${location.origin}/auth/callback?next=/dashboard`,
+          queryParams: {
+            redirect_to: `${location.origin}/auth/callback?next=/dashboard`
+          }
+        }
       });
       if (error) {
         console.error(error);
