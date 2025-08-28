@@ -13,10 +13,14 @@ export default function SignInWithX() {
     setLoading(true);
     try {
       const supabase = createClient();
+      // Use production domain for production, current origin for development
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://soltipwall.com' 
+        : location.origin;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: { 
-          redirectTo: `${location.origin}/auth/callback?next=/dashboard` 
+          redirectTo: `${baseUrl}/auth/callback?next=/dashboard` 
         },
       });
       

@@ -34,12 +34,16 @@ export default function AuthButtons() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const redirectToUrl = `${location.origin}/auth/callback?next=/dashboard&t=${Date.now()}`;
+      // Use production domain for production, current origin for development
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://soltipwall.com' 
+        : location.origin;
+      const redirectToUrl = `${baseUrl}/auth/callback?next=/dashboard`;
+      
       console.log('🔐 Attempting to sign in with X');
       console.log('🔐 Current origin:', location.origin);
       console.log('🔐 Redirect URL:', redirectToUrl);
-      console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log('🔐 Supabase Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+      console.log('🔐 Environment:', process.env.NODE_ENV);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',

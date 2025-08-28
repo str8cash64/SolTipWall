@@ -68,9 +68,13 @@ export function Hero() {
                     description: "Redirecting to Twitter for authentication."
                   })
                           const supabase = createClient();
+        // Use production domain for production, current origin for development
+        const baseUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://soltipwall.com' 
+          : location.origin;
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'twitter',
-          options: { redirectTo: `${location.origin}/auth/callback?next=/dashboard` }
+          options: { redirectTo: `${baseUrl}/auth/callback?next=/dashboard` }
         });
                   if (error) throw error;
                 } catch (error) {
