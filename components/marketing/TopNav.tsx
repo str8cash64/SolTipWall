@@ -48,10 +48,7 @@ export function TopNav() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: { 
-          redirectTo: `${location.origin}/auth/callback?next=/dashboard`,
-          queryParams: {
-            redirect_to: `${location.origin}/auth/callback?next=/dashboard`
-          }
+          redirectTo: `${location.origin}/auth/callback?next=/dashboard`
         }
       });
       if (error) {
