@@ -62,9 +62,10 @@ export async function middleware(req: NextRequest) {
 
   // Only refresh session for protected routes
   if (req.nextUrl.pathname.startsWith('/dashboard')) {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Refresh the session first
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!user) {
+    if (!session) {
       const url = req.nextUrl.clone();
       url.pathname = '/';
       return NextResponse.redirect(url);

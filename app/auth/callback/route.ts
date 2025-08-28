@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -12,7 +12,36 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL('/?error=no_code', url.origin))
   }
 
-  const supabase = createRouteHandlerClient({ cookies })
+  const cookieStore = cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options) {
+          try {
+            cookieStore.set({ name, value, ...options })
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+        remove(name: string, options) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
 
   try {
     // Exchange the code for a session
@@ -29,6 +58,37 @@ export async function GET(req: Request) {
     }
 
     console.log('Successfully authenticated user:', data.user.id)
+    console.log('User email:', data.user.email)
+    console.log('User metadata:', data.user.user_metadata)
+
+    // Upsert user data after successful authentication
+    try {
+      const twitter_id = data.user.user_metadata?.sub || null
+      const twitter_handle = data.user.user_metadata?.user_name || data.user.user_metadata?.preferred_username || null
+      const email = data.user.email || null
+      
+      console.log('Extracted user data:', { twitter_id, twitter_handle, email })
+      
+      // Use the same supabase client to upsert user data directly
+      const { error: userError } = await supabase.from('users').upsert({
+        id: data.user.id,
+        twitter_id,
+        twitter_handle
+      }, { onConflict: 'id' })
+      
+      if (userError) {
+        console.error('Failed to upsert user:', userError)
+      } else {
+        console.log('User upserted successfully')
+      }
+
+      // Ensure a creator_public profile exists (so onboarding can fill it)
+      await supabase.from('creator_public').upsert({ id: data.user.id }, { onConflict: 'id', ignoreDuplicates: true })
+      
+    } catch (error) {
+      console.error('Failed to upsert user:', error)
+      // Don't fail the whole flow if upsert fails
+    }
 
     // Successful authentication - redirect to next page
     return NextResponse.redirect(new URL(next, url.origin))
