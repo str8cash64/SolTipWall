@@ -1,116 +1,97 @@
-'use client';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase-browser';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { User, LogOut, Loader2 } from 'lucide-react';
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-browser'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function AuthButtons() {
-  const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userHandle, setUserHandle] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
-    let mounted = true;
-    const supabase = createClient();
+    let mounted = true
+    const supabase = createClient()
+    
     supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      setUserId(data.user?.id ?? null);
-      setUserHandle(data.user?.user_metadata?.user_name || data.user?.user_metadata?.preferred_username || null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
-      setUserId(sess?.user?.id ?? null);
-      setUserHandle(sess?.user?.user_metadata?.user_name || sess?.user?.user_metadata?.preferred_username || null);
-    });
+      if (!mounted) return
+      setUserId(data.user?.id || null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      setUserId(session?.user?.id || null)
+    })
+
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   async function signInWithX() {
-    setLoading(true);
+    setLoading(true)
     try {
-      const supabase = createClient();
-      // Use production domain for production, current origin for development
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://soltipwall.com' 
-        : location.origin;
-      const redirectToUrl = `${baseUrl}/auth/callback?next=/dashboard`;
+      const supabase = createClient()
+      const redirectTo = `${window.location.origin}/auth/callback`
       
-      console.log('🔐 Attempting to sign in with X');
-      console.log('🔐 Current origin:', location.origin);
-      console.log('🔐 Redirect URL:', redirectToUrl);
-      console.log('🔐 Environment:', process.env.NODE_ENV);
+      console.log('🔐 Starting X auth with redirect:', redirectTo)
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
-        options: { 
-          redirectTo: redirectToUrl
-        }
-      });
+        options: { redirectTo }
+      })
+      
       if (error) {
-        console.error(error);
-        setLoading(false);
+        console.error('🔐 Auth error:', error)
+        setLoading(false)
         toast({
           variant: "destructive",
           title: "Sign in failed",
           description: "There was an error signing you in. Please try again."
-        });
+        })
       }
     } catch (error) {
-      setLoading(false);
+      console.error('🔐 Unexpected error:', error)
+      setLoading(false)
       toast({
         variant: "destructive",
         title: "Sign in failed", 
         description: "There was an error signing you in. Please try again."
-      });
+      })
     }
   }
 
   async function signOut() {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      const supabase = createClient()
+      await supabase.auth.signOut()
       toast({
         title: "Signed out",
         description: "You have been signed out successfully."
-      });
-      location.href = '/';
+      })
     } catch (error) {
+      console.error('🔐 Signout error:', error)
       toast({
         variant: "destructive",
         title: "Sign out failed",
         description: "There was an error signing you out."
-      });
+      })
     }
   }
 
   if (userId) {
     return (
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="sm">
-            Dashboard
-          </Button>
-        </Link>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm">
-            <User className="h-4 w-4 mr-2" />
-            {userHandle || 'User'}
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" asChild>
+          <a href="/dashboard">Dashboard</a>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={signOut}>
+          Sign out
+        </Button>
       </div>
-    );
+    )
   }
 
   return (
@@ -120,14 +101,7 @@ export default function AuthButtons() {
       disabled={loading}
       onClick={signInWithX}
     >
-      {loading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Connecting...
-        </>
-      ) : (
-        'Sign in with X'
-      )}
+      {loading ? 'Connecting...' : 'Sign in with X'}
     </Button>
-  );
+  )
 }

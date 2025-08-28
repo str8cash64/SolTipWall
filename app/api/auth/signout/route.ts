@@ -1,33 +1,19 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 
-export async function POST() {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookies().get(name)?.value
-        },
-        set(name: string, value: string, options) {
-          try {
-            cookies().set({ name, value, ...options })
-          } catch (error) {
-            // Handle cookie setting errors
-          }
-        },
-        remove(name: string, options) {
-          try {
-            cookies().set({ name, value: '', ...options })
-          } catch (error) {
-            // Handle cookie removal errors
-          }
-        },
-      },
-    }
-  )
-  await supabase.auth.signOut()
-  return NextResponse.redirect(new URL('/', 'https://soltipwall.com'))
+export async function POST(request: Request) {
+  console.log('🔐 Signout triggered')
+  
+  const supabase = createClient()
+  const requestUrl = new URL(request.url)
+  const origin = requestUrl.origin
+
+  try {
+    await supabase.auth.signOut()
+    console.log('🔐 User signed out successfully')
+    return NextResponse.redirect(`${origin}/`)
+  } catch (error) {
+    console.error('🔐 Error signing out:', error)
+    return NextResponse.redirect(`${origin}/`)
+  }
 }
