@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { useState, useEffect } from 'react'
-import { sb } from '@/lib/supabase-browser'
+import { createClient } from '@/lib/supabase-browser'
 import { Zap, ArrowRight, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -15,11 +15,12 @@ export function Hero() {
 
   useEffect(() => {
     let mounted = true;
-    sb().auth.getUser().then(({ data }) => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setIsAuthenticated(!!data.user);
     });
-    const { data: sub } = sb().auth.onAuthStateChange((_e, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
       setIsAuthenticated(!!sess?.user);
     });
     return () => {
@@ -66,10 +67,11 @@ export function Hero() {
                     title: "Connecting to X...",
                     description: "Redirecting to Twitter for authentication."
                   })
-                  const { error } = await sb().auth.signInWithOAuth({
-                    provider: 'twitter',
-                    options: { redirectTo: `${location.origin}/auth/callback` }
-                  });
+                          const supabase = createClient();
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'twitter',
+          options: { redirectTo: `${location.origin}/auth/callback?next=/dashboard` }
+        });
                   if (error) throw error;
                 } catch (error) {
                   setIsLoading(false);

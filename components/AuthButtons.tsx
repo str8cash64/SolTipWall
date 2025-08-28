@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { sb } from '@/lib/supabase-browser';
+import { createClient } from '@/lib/supabase-browser';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { User, LogOut, Loader2 } from 'lucide-react';
@@ -14,12 +14,13 @@ export default function AuthButtons() {
 
   useEffect(() => {
     let mounted = true;
-    sb().auth.getUser().then(({ data }) => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setUserId(data.user?.id ?? null);
       setUserHandle(data.user?.user_metadata?.user_name || data.user?.user_metadata?.preferred_username || null);
     });
-    const { data: sub } = sb().auth.onAuthStateChange((_e, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
       setUserId(sess?.user?.id ?? null);
       setUserHandle(sess?.user?.user_metadata?.user_name || sess?.user?.user_metadata?.preferred_username || null);
     });
@@ -32,9 +33,10 @@ export default function AuthButtons() {
   async function signInWithX() {
     setLoading(true);
     try {
-      const { error } = await sb().auth.signInWithOAuth({
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
-        options: { redirectTo: `${location.origin}/auth/callback` }
+        options: { redirectTo: `${location.origin}/auth/callback?next=/dashboard` }
       });
       if (error) {
         console.error(error);
@@ -57,7 +59,8 @@ export default function AuthButtons() {
 
   async function signOut() {
     try {
-      await sb().auth.signOut();
+      const supabase = createClient();
+      await supabase.auth.signOut();
       toast({
         title: "Signed out",
         description: "You have been signed out successfully."
