@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -12,7 +12,7 @@ export default function AuthButtons() {
 
   useEffect(() => {
     let mounted = true
-    const supabase = createClient()
+    const supabase = createSupabaseBrowserClient()
     
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return
@@ -33,14 +33,13 @@ export default function AuthButtons() {
   async function signInWithX() {
     setLoading(true)
     try {
-      const supabase = createClient()
-      const redirectTo = `${window.location.origin}/auth/callback`
-      
-      console.log('🔐 Starting X auth with redirect:', redirectTo)
+      const supabase = createSupabaseBrowserClient()
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
-        options: { redirectTo }
+        options: { 
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       })
       
       if (error) {
@@ -65,12 +64,9 @@ export default function AuthButtons() {
 
   async function signOut() {
     try {
-      const supabase = createClient()
+      const supabase = createSupabaseBrowserClient()
       await supabase.auth.signOut()
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully."
-      })
+      window.location.href = '/'
     } catch (error) {
       console.error('🔐 Signout error:', error)
       toast({
