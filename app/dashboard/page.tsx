@@ -1,22 +1,9 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase-server';
 import { Button } from '@/components/ui/button';
 import DashboardClient from './DashboardClient';
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
-  
-  const supa = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
+  const supa = createClient();
   
   const { data: { user } } = await supa.auth.getUser();
   
