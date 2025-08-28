@@ -28,17 +28,22 @@ export async function GET(req: Request) {
     }
 
     console.log('Successfully authenticated user:', data.user.id);
+    console.log('User email:', data.user.email);
+    console.log('User metadata:', data.user.user_metadata);
 
     // Upsert user data after successful authentication
     try {
       // Use the same supabase client to upsert user data directly
       const twitter_id = data.user.user_metadata?.sub || null;
       const twitter_handle = data.user.user_metadata?.user_name || data.user.user_metadata?.preferred_username || null;
+      const email = data.user.email || null;
+      
+      console.log('Extracted user data:', { twitter_id, twitter_handle, email });
       
       // Import sbAdmin here to avoid circular imports
       const { sbAdmin } = await import('@/lib/supabase-server');
       
-      // Basic user row
+      // Basic user row - email is optional
       const { error: userError } = await sbAdmin.from('users').upsert({
         id: data.user.id,
         twitter_id,
