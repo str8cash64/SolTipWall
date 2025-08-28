@@ -3,9 +3,15 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 
 export async function GET(req: Request) {
+  console.log('🔐 Auth callback route called!')
+  console.log('🔐 Request URL:', req.url)
+  
   const url = new URL(req.url)
   const code = url.searchParams.get('code')
   const next = url.searchParams.get('next') || '/dashboard'
+
+  console.log('🔐 Code present:', !!code)
+  console.log('🔐 Next redirect:', next)
 
   if (!code) {
     console.error('❌ No code provided in callback')
