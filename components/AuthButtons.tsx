@@ -34,10 +34,20 @@ export default function AuthButtons() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const redirectToUrl = `${location.origin}/auth/callback?next=/dashboard`;
+      console.log('🔐 Attempting to sign in with X');
+      console.log('🔐 Current origin:', location.origin);
+      console.log('🔐 Redirect URL:', redirectToUrl);
+      console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('🔐 Supabase Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: { 
-          redirectTo: `${location.origin}/auth/callback?next=/dashboard`
+          redirectTo: redirectToUrl,
+          queryParams: {
+            redirect_to: redirectToUrl
+          }
         }
       });
       if (error) {
