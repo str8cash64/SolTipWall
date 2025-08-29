@@ -6,10 +6,14 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const code = url.searchParams.get('code')
   const error = url.searchParams.get('error')
+  
+  // Get the origin from the request if NEXT_PUBLIC_SITE_URL is not set
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || url.origin
 
   if (error) {
     // Optional: log this to Sentry etc.
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/?auth=error`)
+    console.error('Auth callback error:', error)
+    return NextResponse.redirect(`${siteUrl}/?auth=error`)
   }
 
   if (code) {
@@ -17,11 +21,12 @@ export async function GET(req: NextRequest) {
     // This will set the "sb-..." cookies on your domain
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
     if (exchangeError) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/?auth=exchange_error`)
+      console.error('Auth exchange error:', exchangeError)
+      return NextResponse.redirect(`${siteUrl}/?auth=exchange_error`)
     }
     // If you have onboarding logic, send there when first login
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`)
+    return NextResponse.redirect(`${siteUrl}/dashboard`)
   }
 
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/`)
+  return NextResponse.redirect(`${siteUrl}/`)
 }
