@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import { createClient } from '@/lib/supabase-browser'
+import { getSupabaseBrowser } from '@/lib/supabase-browser'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,7 +18,7 @@ export function MobileStickyCTA() {
 
   useEffect(() => {
     let mounted = true;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowser();
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setIsAuthenticated(!!data.user);
@@ -93,7 +93,7 @@ export function MobileStickyCTA() {
           title: "Connecting to X...",
           description: "Redirecting to Twitter for authentication."
         })
-        const supabase = createClient();
+        const supabase = getSupabaseBrowser();
         const redirectTo = `${window.location.origin}/auth/callback`
         
         console.log('🔐 Starting X auth with redirect:', redirectTo)

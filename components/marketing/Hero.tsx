@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { getSupabaseBrowser } from '@/lib/supabase-browser'
 import { ArrowRight, Loader2, MessageCircle, Wallet, Zap, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -20,7 +20,7 @@ export function Hero() {
 
   useEffect(() => {
     let mounted = true;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowser();
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setIsAuthenticated(!!data.user);
@@ -44,7 +44,7 @@ export function Hero() {
           title: "Connecting to X...",
           description: "Redirecting to Twitter for authentication."
         })
-        const supabase = createClient();
+        const supabase = getSupabaseBrowser();
         const redirectTo = `${window.location.origin}/auth/callback`
         
         console.log('🔐 Starting X auth with redirect:', redirectTo)

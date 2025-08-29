@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useToast } from '@/components/ui/use-toast'
 import { Zap, Menu, ArrowRight, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase-browser'
+import { getSupabaseBrowser } from '@/lib/supabase-browser'
 
 const navLinks = [
   { href: '#creators', label: 'Browse Creators' },
@@ -23,7 +23,7 @@ export function TopNav() {
 
   useEffect(() => {
     let mounted = true;
-    const supabase = createClient();
+    const supabase = getSupabaseBrowser();
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setIsAuthenticated(!!data.user);
@@ -44,7 +44,7 @@ export function TopNav() {
         title: "Connecting to X...",
         description: "Redirecting to Twitter for authentication."
       })
-      const supabase = createClient();
+      const supabase = getSupabaseBrowser();
       const redirectTo = `${window.location.origin}/auth/callback`
       
       console.log('🔐 Starting X auth with redirect:', redirectTo)
