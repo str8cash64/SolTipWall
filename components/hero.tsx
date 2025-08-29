@@ -16,11 +16,11 @@ export function Hero() {
   useEffect(() => {
     let mounted = true;
     const supabase = getSupabaseBrowser();
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: any }) => {
       if (!mounted) return;
       setIsAuthenticated(!!data.user);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e: any, sess: any) => {
       setIsAuthenticated(!!sess?.user);
     });
     return () => {

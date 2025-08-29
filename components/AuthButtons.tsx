@@ -14,12 +14,12 @@ export default function AuthButtons() {
     let mounted = true
     const supabase = createSupabaseBrowserClient()
     
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: any }) => {
       if (!mounted) return
       setUserId(data.user?.id || null)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (!mounted) return
       setUserId(session?.user?.id || null)
     })
